@@ -69,7 +69,7 @@ public class SundayContentHandler
    private ParticleHandler defParticleHandler = DefaultHandlers.ELEMENT_HANDLER;
 
    private UnmarshallingContextImpl ctx = new UnmarshallingContextImpl();
-   
+
    private final boolean trace = log.isTraceEnabled();
 
    public SundayContentHandler(SchemaBinding schema)
@@ -255,10 +255,10 @@ public class SundayContentHandler
                         ElementBinding xopInclude = new ElementBinding(schema, Constants.QNAME_XOP_INCLUDE, xopIncludeType);
 
                         particle = new ParticleBinding(xopInclude);
-                        
+
                         ElementBinding parentElement = (ElementBinding) item.particle.getTerm();
                         parentElement.setXopUnmarshaller(schema.getXopUnmarshaller());
-         
+
                         item.handler = DefaultHandlers.XOP_HANDLER;
                         item.ignoreCharacters = true;
                         item.o = item.handler.startParticle(stack.peek().o, startName, stack.peek().particle, null, nsRegistry);
@@ -656,7 +656,6 @@ public class SundayContentHandler
       StackItem item = stack.peek();
       if(item.o != null &&
             !(item.o instanceof GenericValueContainer) &&
-            (item.o instanceof Collection == false) &&
             term.getAddMethodMetaData() == null &&
             term.getMapEntryMetaData() == null &&
             term.getPutMethodMetaData() == null)
@@ -785,7 +784,7 @@ public class SundayContentHandler
       }
       return null;
    }
-   
+
    private void endElement()
    {
       StackItem item = stack.peek();
@@ -893,7 +892,7 @@ public class SundayContentHandler
                      unmarshalled = beforeSetParent.beforeSetParent(unmarshalled, ctx);
                      ctx.clear();
                   }
-                  
+
                   if(o instanceof ValueList)
                   {
                      ValueList valueList = (ValueList)o;
@@ -975,6 +974,7 @@ public class SundayContentHandler
          ParticleBinding parentParticle = getParentParticle();
          boolean hasWildcard = false;
          ParticleHandler wildcardHandler = null;
+
          if (parentParticle != null && parentParticle.getTerm().isElement())
          {
             WildcardBinding wildcard = ((ElementBinding) parentParticle.getTerm()).getType().getWildcard();
@@ -1061,7 +1061,7 @@ public class SundayContentHandler
          o = beforeSetParent.beforeSetParent(o, ctx);
          ctx.clear();
       }
-      
+
       if(parent instanceof ValueList /*&& !particle.getTerm().isSkip()*/)
       {
          if(parent == o)
@@ -1181,7 +1181,7 @@ public class SundayContentHandler
          list.clear();
       }
 
-      public void push(StackItem o)
+      public void push(Object o)
       {
          list.add(o);
       }
@@ -1216,7 +1216,7 @@ public class SundayContentHandler
          return list.size();
       }
    }
-   
+
    private class UnmarshallingContextImpl implements UnmarshallingContext
    {
       Object parent;
