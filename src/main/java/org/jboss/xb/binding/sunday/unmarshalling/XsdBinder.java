@@ -288,17 +288,10 @@ public class XsdBinder
       XSNamedMap groups = model.getComponents(XSConstants.MODEL_GROUP_DEFINITION);
       if (ctx.trace)
          log.trace("Model groups: " + groups.getLength());
-      // First make sure we bind all the groups
       for(int i = 0; i < groups.getLength(); ++i)
       {
          XSModelGroupDefinition groupDef = (XSModelGroupDefinition)groups.item(i);
-         bindGlobalGroup(groupDef, ctx);
-      }
-      // Now bind the particles which may have references to the other groups
-      for(int i = 0; i < groups.getLength(); ++i)
-      {
-         XSModelGroupDefinition groupDef = (XSModelGroupDefinition)groups.item(i);
-         bindGlobalGroupParticles(groupDef.getModelGroup(), ctx);
+         bindGlobalGroup(groupDef.getModelGroup(), ctx.sharedElements);
       }
 
       XSNamedMap types = model.getComponents(XSConstants.TYPE_DEFINITION);
@@ -840,12 +833,40 @@ public class XsdBinder
             // todo: investigate this
             if(modelGroup.getParticles().getLength() > 0)
             {
-               ModelGroupBinding groupBinding = bindModelGroup(ctx, modelGroup);
+               ModelGroupBinding groupBinding;
+               switch(modelGroup.getCompositor())
+               {
+                  case XSModelGroup.COMPOSITOR_ALL:
+                     groupBinding = new AllBinding(ctx.schema);
+                     break;
+                  case XSModelGroup.COMPOSITOR_CHOICE:
+                     groupBinding = new ChoiceBinding(ctx.schema);
+                     break;
+                  case XSModelGroup.COMPOSITOR_SEQUENCE:
+                     groupBinding = new SequenceBinding(ctx.schema);
+                     break;
+                  default:
+                     throw new JBossXBRuntimeException("Unexpected model group: " + modelGroup.getCompositor());
+               }
 
                ParticleBinding particleBinding = new ParticleBinding(groupBinding);
                particleBinding.setMaxOccursUnbounded(particle.getMaxOccursUnbounded());
                particleBinding.setMinOccurs(particle.getMinOccurs());
                particleBinding.setMaxOccurs(particle.getMaxOccurs());
+
+               if (ctx.trace)
+               {
+                  log.trace("created model group " + groupBinding);
+               }
+
+               if (ctx.processAnnotations)
+               {
+                  XSAnnotation annotation = modelGroup.getAnnotation();
+                  if(annotation != null)
+                  {
+                     customizeTerm(annotation, groupBinding, ctx.trace);
+                  }
+               }
 
                Object o = ctx.peekTypeOrGroup();
                if(o instanceof ModelGroupBinding)
@@ -867,12 +888,9 @@ public class XsdBinder
                   }
                }
 
-               if (groupBinding.getParticles().isEmpty())
-               {
-                  ctx.pushModelGroup(groupBinding);
-                  bindModelGroupParticles(ctx, modelGroup);
-                  ctx.popModelGroup();
-               }
+               ctx.pushModelGroup(groupBinding);
+               bindModelGroup(ctx, modelGroup);
+               ctx.popModelGroup();
             }
             break;
          case XSConstants.WILDCARD:
@@ -891,40 +909,6 @@ public class XsdBinder
       }
    }
 
-   private static ModelGroupBinding bindModelGroup(Context ctx, XSModelGroup modelGroup)
-   {
-      // Is this a global group?
-      ModelGroupBinding groupBinding = ctx.sharedElements.getGlobalGroup(modelGroup);
-      if (groupBinding != null)
-         return groupBinding;
-      
-      switch(modelGroup.getCompositor())
-      {
-         case XSModelGroup.COMPOSITOR_ALL:
-            groupBinding = new AllBinding(ctx.schema);
-            break;
-         case XSModelGroup.COMPOSITOR_CHOICE:
-            groupBinding = new ChoiceBinding(ctx.schema);
-            break;
-         case XSModelGroup.COMPOSITOR_SEQUENCE:
-            groupBinding = new SequenceBinding(ctx.schema);
-            break;
-         default:
-            throw new JBossXBRuntimeException("Unexpected model group: " + modelGroup.getCompositor());
-      }
-
-      if (ctx.trace)
-         log.trace("created model group " + groupBinding);
-
-      if (ctx.processAnnotations)
-      {
-         XSAnnotation annotation = modelGroup.getAnnotation();
-         if (annotation != null)
-            customizeTerm(annotation, groupBinding, ctx.trace);
-      }
-      return groupBinding;
-   }
-
    private static void bindWildcard(Context ctx, XSParticle particle)
    {
       WildcardBinding binding = new WildcardBinding(ctx.schema);
@@ -935,6 +919,15 @@ public class XsdBinder
       particleBinding.setMaxOccursUnbounded(particle.getMaxOccursUnbounded());
       particleBinding.setMinOccurs(particle.getMinOccurs());
       group.addParticle(particleBinding);
+
+      TypeBinding type = ctx.peekType();
+      type.setWildcard(binding);
+
+      if (ctx.trace)
+      {
+         log.trace("added wildcard to " + group);
+         log.trace("added wildcard to type " + type.getQName());
+      }
 
       XSWildcard wildcard = (XSWildcard)particle.getTerm();
       if(wildcard.getName() != null)
@@ -1028,9 +1021,6 @@ public class XsdBinder
       if (ctx.trace)
       {
          TypeBinding parentType = ctx.peekType();
-         QName parentQName = null;
-         if (parentType != null)
-            parentQName = parentType.getQName();
          log.trace("element: name=" +
             qName +
             ", type=" +
@@ -1041,7 +1031,7 @@ public class XsdBinder
             element.isNillable() +
             ", minOccurs=" + minOccurs +
             ", maxOccurs=" + (maxOccursUnbounded ? "unbounded" : "" + maxOccurs) +
-            ", " + (global ? "global scope" : " owner type=" + parentQName)
+            ", " + (global ? "global scope" : " owner type=" + parentType.getQName())
          );
       }
 
@@ -1057,7 +1047,7 @@ public class XsdBinder
       return particle;
    }
 
-   private static void bindModelGroupParticles(Context ctx, XSModelGroup modelGroup)
+   private static void bindModelGroup(Context ctx, XSModelGroup modelGroup)
    {
       XSObjectList particles = modelGroup.getParticles();
       for(int i = 0; i < particles.getLength(); ++i)
@@ -1284,24 +1274,25 @@ public class XsdBinder
       }
    }
 
-   private static void bindGlobalGroup(XSModelGroupDefinition groupDef, Context ctx)
+   private static void bindGlobalGroup(XSModelGroup group, SharedElements sharedElements)
    {
-      QName groupName = new QName(groupDef.getNamespace(), groupDef.getName());
-      XSModelGroup group = groupDef.getModelGroup();
-      ModelGroupBinding groupBinding = bindModelGroup(ctx, group);
-      groupBinding.setQName(groupName);
-      ctx.sharedElements.addGlobalGroup(group, groupBinding);
-      ctx.schema.addGroup(groupName, groupBinding);
-   }
-
-   private static void bindGlobalGroupParticles(XSModelGroup group, Context ctx)
-   {
-      ModelGroupBinding groupBinding = ctx.sharedElements.getGlobalGroup(group);
-      if (groupBinding.getParticles().isEmpty())
+      XSObjectList particles = group.getParticles();
+      for(int j = 0; j < particles.getLength(); ++j)
       {
-         ctx.pushModelGroup(groupBinding);
-         bindModelGroupParticles(ctx, group);
-         ctx.popModelGroup();
+         XSParticle particle = (XSParticle)particles.item(j);
+         XSTerm term = particle.getTerm();
+         switch(term.getType())
+         {
+            case XSConstants.ELEMENT_DECLARATION:
+               XSElementDeclaration element = ((XSElementDeclaration)term);
+               sharedElements.add(element);
+               break;
+            case XSConstants.WILDCARD:
+               // todo is it actually possible?
+               break;
+            case XSConstants.MODEL_GROUP:
+               bindGlobalGroup((XSModelGroup)term, sharedElements);
+         }
       }
    }
 
@@ -1312,8 +1303,6 @@ public class XsdBinder
    {
       private Map elements = Collections.EMPTY_MAP;
 
-      private Map globalGroups = Collections.EMPTY_MAP;
-      
       public void add(XSElementDeclaration element)
       {
          switch(elements.size())
@@ -1350,25 +1339,6 @@ public class XsdBinder
             default:
                elements.put(element, type);
          }
-      }
-      
-      public void addGlobalGroup(XSModelGroup group, ModelGroupBinding groupBinding)
-      {
-         switch(globalGroups.size())
-         {
-            case 0:
-               globalGroups = Collections.singletonMap(group, groupBinding);
-               break;
-            case 1:
-               globalGroups = new HashMap(globalGroups);
-            default:
-               globalGroups.put(group, groupBinding);
-         }
-      }
-
-      public ModelGroupBinding getGlobalGroup(XSModelGroup group)
-      {
-         return (ModelGroupBinding) globalGroups.get(group);
       }
    }
 
