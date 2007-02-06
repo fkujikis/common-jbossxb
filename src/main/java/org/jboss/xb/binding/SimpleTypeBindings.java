@@ -21,6 +21,11 @@
   */
 package org.jboss.xb.binding;
 
+import org.jboss.logging.Logger;
+import org.jboss.util.Base64;
+
+import javax.xml.namespace.QName;
+import javax.xml.namespace.NamespaceContext;
 import java.io.ByteArrayOutputStream;
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
@@ -29,17 +34,11 @@ import java.math.BigInteger;
 import java.net.URISyntaxException;
 import java.text.DecimalFormat;
 import java.text.ParseException;
-import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.List;
 import java.util.StringTokenizer;
 import java.util.TimeZone;
-
-import javax.xml.namespace.NamespaceContext;
-import javax.xml.namespace.QName;
-
-import org.jboss.logging.Logger;
-import org.jboss.util.Base64;
+import java.util.List;
+import java.util.ArrayList;
 
 
 /**

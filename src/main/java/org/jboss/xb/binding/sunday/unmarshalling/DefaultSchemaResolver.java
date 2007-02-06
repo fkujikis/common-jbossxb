@@ -316,7 +316,7 @@ public class DefaultSchemaResolver implements SchemaBindingResolver
       {
          baseURI = this.baseURI;
       }
-      
+
       if (is == null &&  baseURI != null && schemaLocation != null)
       {
          try

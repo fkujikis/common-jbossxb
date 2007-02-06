@@ -387,10 +387,8 @@ public class RtElementHandler
       if(!term.isModelGroup())
       {
          TypeBinding type = ((ElementBinding)term).getType();
-         if(type.isSimple() ||
-               classMetaData == null && mapEntryMetaData == null &&
-               (!type.isStartElementCreatesObject() ||
-                     Constants.QNAME_ANYTYPE.equals(type.getQName())))
+         if(!type.isStartElementCreatesObject() ||
+            classMetaData == null && mapEntryMetaData == null && Constants.QNAME_ANYTYPE.equals(type.getQName()))
          {
             if(trace)
             {
@@ -399,6 +397,8 @@ public class RtElementHandler
             return null;
          }
       }
+
+      Object o = null;
 
       // if addMethod is specified, it's probably some collection field
       // but should not be set as a property. Instead, items are added to it using the addMethod
@@ -452,7 +452,7 @@ public class RtElementHandler
                {
                   log.trace("startElement " + elementName + " new array " + itemType.getName());
                }
-               return GenericValueContainer.FACTORY.array(itemType);
+               o = GenericValueContainer.FACTORY.array(itemType);
             }
          }
          else
@@ -475,7 +475,7 @@ public class RtElementHandler
 
             if(trace)
             {
-               log.trace("startElement " + elementName + " property=" + propName + " wrapper=" + wrapperType);
+               log.trace("startElement " + elementName + " property=" + propName);
             }
 
             Class parentClass = wrapperType;
@@ -495,240 +495,240 @@ public class RtElementHandler
                }
             }
 
-            Class fieldType = null;
+            Class fieldType;
             if(parentClass.isArray())
             {
                fieldType = parentClass.getComponentType();
             }
             else
             {
-               //fieldType = FieldInfo.getFieldInfo(parentClass, propName, true).getType();
-               // this was changed to false because allow overriding of handler.setParent()
-               // with an interceptor.add(). See CollectionOverridePropertyUnitTestCase
-               // In other words, don't treat it as an array wrapper.
-               FieldInfo fieldInfo = FieldInfo.getFieldInfo(parentClass, propName, false);
-               if(fieldInfo != null)
+               fieldType = FieldInfo.getFieldInfo(parentClass, propName, true).getType();
+               if(particle.isRepeatable() && fieldType.isArray())
                {
-                  fieldType = fieldInfo.getType();
-                  if (particle.isRepeatable() && fieldType.isArray())
-                  {
-                     fieldType = fieldType.getComponentType();
-                  }
-               }
-               else if(((ElementBinding)term).getType().getInterceptors(arrayItem.getQName()).isEmpty() &&
-                     arrayItem.getInterceptors().isEmpty())
-               {
-                  QName typeName = ((ElementBinding)term).getType().getQName();
-                  throw new JBossXBRuntimeException(
-                        "Couldn't apply 'array wrapper' pattern for element " +
-                        elementName + " of type " +
-                        (typeName == null ? "anonymous" : typeName.toString()) +
-                        ": failed to resolve property " + propName +
-                        " and no interceptors applied to override handler.setParent(...)");
+                  fieldType = fieldType.getComponentType();
                }
             }
 
-            if(fieldType != null)
+            if(fieldType.isArray())
             {
-               // TODO: review the logic for cases when wrapperType == null
-               if (fieldType.isArray())
-               {
-                  return GenericValueContainer.FACTORY.array(wrapperType, propName, fieldType.getComponentType());
-               }
-               else if (Collection.class.isAssignableFrom(fieldType))
-               {
-                  if (wrapperType == null)
-                  {
-                     return new ValueListInitializer().newValueList(ValueListHandler.FACTORY.child(), Collection.class);
-                     //o = new ArrayList();
-                  }
-               }
-               else
-               {
-                  return GenericValueContainer.FACTORY.array(wrapperType, propName, fieldType);
-               }
+               o = GenericValueContainer.FACTORY.array(wrapperType, propName, fieldType.getComponentType());
             }
-         }
-      }
-
-      Object o = null;
-      if (mapEntryMetaData != null)
-      {
-         if (mapEntryMetaData.getImpl() != null)
-         {
-            Class cls = loadClassForTerm(mapEntryMetaData.getImpl(), term.getSchema().isIgnoreUnresolvedFieldOrClass(), elementName);
-
-            if (trace)
+            else if(Collection.class.isAssignableFrom(fieldType))
             {
-               log.trace("startElement " + elementName + " new map entry " + cls.getName());
-            }
-
-            o = newInstance(cls, elementName, term.getSchema().isUseNoArgCtorIfFound());
-         }
-         else
-         {
-            o = new MapEntry();
-            if (trace)
-            {
-               log.trace("startElement " + elementName + " new map entry");
-            }
-         }
-
-         if (mapEntryMetaData.isNonNullValue() && mapEntryMetaData.getValueType() != null)
-         {
-            Class mapValueType;
-            try
-            {
-               mapValueType = Thread.currentThread().getContextClassLoader().loadClass(mapEntryMetaData.getValueType());
-            }
-            catch (ClassNotFoundException e)
-            {
-               throw new JBossXBRuntimeException("startElement failed for " + elementName + ": failed to load class "
-                     + mapEntryMetaData.getValueType() + " for map entry value.");
-            }
-
-            Object value;
-            try
-            {
-               if (trace)
-               {
-                  log.trace("startElement " + elementName + " map value type " + mapEntryMetaData.getValueType());
-               }
-               value = mapValueType.newInstance();
-            }
-            catch (Exception e)
-            {
-               throw new JBossXBRuntimeException("startElement failed for " + elementName
-                     + ": failed to create an instance of " + mapValueType + " for map entry value.");
-            }
-
-            if (o instanceof MapEntry)
-            {
-               ((MapEntry) o).setValue(value);
+               //System.out.println("GeenericValueContainer.child: " + elementName);
+               o = new ValueListInitializer().newValueList(ValueListHandler.FACTORY.child(), Collection.class);
+               //o = new ArrayList();
             }
             else
             {
-               String getValueMethodName = mapEntryMetaData.getGetValueMethod();
-               if (getValueMethodName == null)
-               {
-                  getValueMethodName = "getValue";
-               }
-
-               String setValueMethodName = mapEntryMetaData.getSetValueMethod();
-               if (setValueMethodName == null)
-               {
-                  setValueMethodName = "setValue";
-               }
-
-               Method getValueMethod;
-               try
-               {
-                  getValueMethod = o.getClass().getMethod(getValueMethodName, null);
-               }
-               catch (NoSuchMethodException e)
-               {
-                  throw new JBossXBRuntimeException("getValueMethod=" + getValueMethodName
-                        + " is not found in map entry " + o.getClass());
-               }
-
-               Method setValueMethod;
-               try
-               {
-                  setValueMethod = o.getClass().getMethod(setValueMethodName, new Class[]{getValueMethod.getReturnType()});
-               }
-               catch (NoSuchMethodException e)
-               {
-                  throw new JBossXBRuntimeException("setValueMethod=" + setValueMethodName + "("
-                        + getValueMethod.getReturnType().getName() + " value) is not found in map entry "
-                        + o.getClass());
-               }
-
-               try
-               {
-                  setValueMethod.invoke(o, new Object[]
-                  {value});
-               }
-               catch (Exception e)
-               {
-                  throw new JBossXBRuntimeException("setValueMethod=" + setValueMethodName + " failed: owner=" + o
-                        + ", value=" + value + ", msg=" + e.getMessage(), e);
-               }
+               o = GenericValueContainer.FACTORY.array(wrapperType, propName, fieldType);
             }
          }
       }
       else
       {
-         // todo: for now we require metadata for model groups to be bound
-         // todo 2: parent.getClass() is not going to work for containers
-         Class parentClass = null;
-         if (parent != null)
+         if(mapEntryMetaData != null)
          {
-            if (parent instanceof GenericValueContainer)
+            if(mapEntryMetaData.getImpl() != null)
             {
-               parentClass = ((GenericValueContainer) parent).getTargetClass();
-            }
-            else if (parent instanceof ValueList)
-            {
-               parentClass = ((ValueList) parent).getTargetClass();
+               Class cls = loadClassForTerm(mapEntryMetaData.getImpl(),
+                  term.getSchema().isIgnoreUnresolvedFieldOrClass(),
+                  elementName
+               );
+
+               if(trace)
+               {
+                  log.trace("startElement " + elementName + " new map entry " + cls.getName());
+               }
+
+               o = newInstance(cls, elementName, term.getSchema().isUseNoArgCtorIfFound());
             }
             else
             {
-               parentClass = parent.getClass();
-            }
-         }
-
-         Class cls;
-         if (term.isModelGroup())
-         {
-            if (classMetaData == null)
-            {
-               throw new JBossXBRuntimeException(
-                     "Model groups should be annotated with 'class' annotation to be bound.");
-            }
-            cls = loadClassForTerm(classMetaData.getImpl(), term.getSchema().isIgnoreUnresolvedFieldOrClass(), elementName);
-         }
-         else
-         {
-            ElementBinding element = (ElementBinding) term;
-            cls = classForNonArrayItem(element, parentClass);
-            if (cls != null)
-            {
-               // todo: before that, the type should be checked for required attributes and elements
-               TypeBinding simpleType = element.getType().getSimpleType();
-               if (simpleType != null)
+               o = new MapEntry();
+               if(trace)
                {
-                  Class simpleCls = classForSimpleType(simpleType, element.isNillable());
-                  if (cls.equals(simpleCls) || cls.isPrimitive() && Classes.getPrimitiveWrapper(cls) == simpleCls
-                        || simpleCls.isPrimitive() && Classes.getPrimitiveWrapper(simpleCls) == cls)
+                  log.trace("startElement " + elementName + " new map entry");
+               }
+            }
+
+            if(mapEntryMetaData.isNonNullValue() && mapEntryMetaData.getValueType() != null)
+            {
+               Class mapValueType;
+               try
+               {
+                  mapValueType =
+                     Thread.currentThread().getContextClassLoader().loadClass(mapEntryMetaData.getValueType());
+               }
+               catch(ClassNotFoundException e)
+               {
+                  throw new JBossXBRuntimeException("startElement failed for " +
+                     elementName +
+                     ": failed to load class " +
+                     mapEntryMetaData.getValueType() +
+                     " for map entry value."
+                  );
+               }
+
+               Object value;
+               try
+               {
+                  if(trace)
                   {
-                     cls = null;
+                     log.trace("startElement " + elementName + " map value type " + mapEntryMetaData.getValueType());
+                  }
+                  value = mapValueType.newInstance();
+               }
+               catch(Exception e)
+               {
+                  throw new JBossXBRuntimeException("startElement failed for " +
+                     elementName +
+                     ": failed to create an instance of " +
+                     mapValueType +
+                     " for map entry value."
+                  );
+               }
+
+               if(o instanceof MapEntry)
+               {
+                  ((MapEntry)o).setValue(value);
+               }
+               else
+               {
+                  String getValueMethodName = mapEntryMetaData.getGetValueMethod();
+                  if(getValueMethodName == null)
+                  {
+                     getValueMethodName = "getValue";
+                  }
+
+                  String setValueMethodName = mapEntryMetaData.getSetValueMethod();
+                  if(setValueMethodName == null)
+                  {
+                     setValueMethodName = "setValue";
+                  }
+
+                  Method getValueMethod;
+                  try
+                  {
+                     getValueMethod = o.getClass().getMethod(getValueMethodName, null);
+                  }
+                  catch(NoSuchMethodException e)
+                  {
+                     throw new JBossXBRuntimeException("getValueMethod=" +
+                        getValueMethodName +
+                        " is not found in map entry " + o.getClass()
+                     );
+                  }
+
+                  Method setValueMethod;
+                  try
+                  {
+                     setValueMethod =
+                        o.getClass().getMethod(setValueMethodName, new Class[]{getValueMethod.getReturnType()});
+                  }
+                  catch(NoSuchMethodException e)
+                  {
+                     throw new JBossXBRuntimeException("setValueMethod=" +
+                        setValueMethodName +
+                        "(" +
+                        getValueMethod.getReturnType().getName() +
+                        " value) is not found in map entry " + o.getClass()
+                     );
+                  }
+
+                  try
+                  {
+                     setValueMethod.invoke(o, new Object[]{value});
+                  }
+                  catch(Exception e)
+                  {
+                     throw new JBossXBRuntimeException("setValueMethod=" +
+                        setValueMethodName +
+                        " failed: owner=" +
+                        o +
+                        ", value=" + value + ", msg=" + e.getMessage(), e
+                     );
                   }
                }
             }
          }
-
-         if (cls != null)
+         else
          {
-            boolean noArgCtor;
-            if (classMetaData == null)
+            // todo: for now we require metadata for model groups to be bound
+            // todo 2: parent.getClass() is not going to work for containers
+            Class parentClass = null;
+            if(parent != null)
             {
-               noArgCtor = term.getSchema().isUseNoArgCtorIfFound();
+               if(parent instanceof GenericValueContainer)
+               {
+                  parentClass = ((GenericValueContainer)parent).getTargetClass();
+               }
+               else if(parent instanceof ValueList)
+               {
+                  parentClass = ((ValueList)parent).getTargetClass();
+               }
+               else
+               {
+                  parentClass = parent.getClass();
+               }
+            }
+
+            Class cls;
+            if(term.isModelGroup())
+            {
+               if(classMetaData == null)
+               {
+                  throw new JBossXBRuntimeException(
+                     "Model groups should be annotated with 'class' annotation to be bound."
+                  );
+               }
+               cls = loadClassForTerm(classMetaData.getImpl(),
+                  term.getSchema().isIgnoreUnresolvedFieldOrClass(),
+                  elementName
+               );
             }
             else
             {
-               Boolean termUsesNoArgCtor = classMetaData.isUseNoArgCtor();
-               noArgCtor = termUsesNoArgCtor == null ?
-                     term.getSchema().isUseNoArgCtorIfFound() : termUsesNoArgCtor.booleanValue();
+               ElementBinding element = (ElementBinding)term;
+               cls = classForNonArrayItem(element, parentClass);
+               if(cls != null)
+               {
+                  // todo: before that, the type should be checked for required attributes and elements
+                  TypeBinding simpleType = element.getType().getSimpleType();
+                  if(simpleType != null)
+                  {
+                     Class simpleCls = classForSimpleType(simpleType, element.isNillable());
+                     if(cls.equals(simpleCls) ||
+                        cls.isPrimitive() && Classes.getPrimitiveWrapper(cls) == simpleCls ||
+                        simpleCls.isPrimitive() && Classes.getPrimitiveWrapper(simpleCls) == cls)
+                     {
+                        cls = null;
+                     }
+                  }
+               }
             }
 
-            if (trace)
+            if(cls != null)
             {
-               log.trace("startElement " + elementName + " new " + cls.getName() + ", noArgCtor=" + noArgCtor);
+               boolean noArgCtor;
+               if(classMetaData == null)
+               {
+                  noArgCtor = term.getSchema().isUseNoArgCtorIfFound();
+               }
+               else
+               {
+                  Boolean termUsesNoArgCtor = classMetaData.isUseNoArgCtor();
+                  noArgCtor = termUsesNoArgCtor == null ?
+                     term.getSchema().isUseNoArgCtorIfFound() : termUsesNoArgCtor.booleanValue();               }
+
+               if(trace)
+               {
+                  log.trace("startElement " + elementName + " new " + cls.getName() + ", noArgCtor=" + noArgCtor);
+               }
+               o = newInstance(cls, elementName, noArgCtor);
             }
-            o = newInstance(cls, elementName, noArgCtor);
          }
       }
-
       return o;
    }
 
