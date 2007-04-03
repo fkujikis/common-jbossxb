@@ -189,9 +189,6 @@ public abstract class PojoServerTestBase extends BaseTestCase
    /** The key element name */
    protected static final QName keyQName = new QName(BEAN_DEPLOYER_NS, "key");
 
-   /** The valueGroup name */
-   protected static final QName valueGroupQName = new QName(BEAN_DEPLOYER_NS, "valueGroup");
-
    /** The schema binding */
    protected static SchemaBinding schemaBinding;
    
