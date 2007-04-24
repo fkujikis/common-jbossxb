@@ -575,7 +575,7 @@ public class MarshallerImpl
 
       String characters = null;
       TypeBinding simpleType = type.getSimpleType();
-      if(simpleType != null && !Constants.QNAME_ANYTYPE.equals(type.getQName()))
+      if(simpleType != null)
       {
          String fieldName = ctx.getSimpleContentProperty();
          CharactersMetaData charactersMetaData = type.getCharactersMetaData();
@@ -812,25 +812,24 @@ public class MarshallerImpl
          }
          else
          {
-            ObjectLocalMarshaller marshaller = wildcard.getUnresolvedMarshaller();
-            if(marshaller != null)
-            {
-               marshaller.marshal(ctx, o);
-               return true;
-            }
-            
-            String msg = "Failed to marshal wildcard: neither class mapping was found for "
-               + o.getClass() + "@" + o.hashCode()
-               + " (toString: " + o
-               + ") nor marshaller for unresolved classes was setup.";
             if(ignoreUnresolvedWildcard)
             {
-               log.warn(msg);
+               log.warn("Failed to marshal wildcard. Class mapping not found for " +
+                   o.getClass() +
+                   "@" +
+                   o.hashCode() +
+                   ": " + o
+               );
                return true;
             }
             else
             {
-               throw new JBossXBRuntimeException(msg);
+               throw new IllegalStateException("Failed to marshal wildcard. Class mapping not found for " +
+                   o.getClass() +
+                   "@" +
+                   o.hashCode() +
+                   ": " + o
+               );
             }
          }
       }

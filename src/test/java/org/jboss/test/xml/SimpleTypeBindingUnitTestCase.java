@@ -402,7 +402,7 @@ public class SimpleTypeBindingUnitTestCase
       String marshalled = SimpleTypeBindings.marshalDate(c);
       assertEquals("0006-06-01Z", marshalled);
    }
-   
+
    public void testHexBinary() throws Exception
    {
       String s = "kloop";
@@ -498,19 +498,17 @@ public class SimpleTypeBindingUnitTestCase
       assertNotNull(marshalled);
       assertEquals("true true false true", marshalled);
    }
-   
+
    public void testBase64BinaryUnmarshalling() throws Exception
    {
       byte[] unmarshalled = (byte[]) SimpleTypeBindings.unmarshal("base64Binary", "VGVzdCBNZXNzYWdl", null);
-
       assertEquals("Test Message", new String(unmarshalled));
    }
 
    public void testBase64BinaryGZippedUnmarshalling() throws Exception
    {
       // GZipped content should NOT be automatically unzipped.
-      byte[] unmarshalled = (byte[]) SimpleTypeBindings.unmarshal("base64Binary",
-            "H4sIAAAAAAAAAAtJLS5R8E0tLk5MTwUA74UAyAwAAAA=", null);
+      byte[] unmarshalled = (byte[]) SimpleTypeBindings.unmarshal("base64Binary", "H4sIAAAAAAAAAAtJLS5R8E0tLk5MTwUA74UAyAwAAAA=", null);
 
       assertEquals(32, unmarshalled.length);
       assertFalse("Test Message".equals(new String(unmarshalled)));
@@ -519,7 +517,6 @@ public class SimpleTypeBindingUnitTestCase
    public void testBase64BinaryMarshalling() throws Exception
    {
       String marshalled = SimpleTypeBindings.marshal("base64Binary", "Test Message".getBytes(), null);
-
       assertEquals("VGVzdCBNZXNzYWdl", marshalled);
-   }   
+   }
 }
