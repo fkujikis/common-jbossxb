@@ -62,7 +62,7 @@ public interface UnmarshallingContext
     * @param trimTextContent
     */
    void setTrimTextContent(boolean trimTextContent);
-   
+
    /**
     * Returns child's content.
     * todo consider deprecating this method

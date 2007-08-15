@@ -47,7 +47,7 @@ import java.lang.reflect.Method;
  * @version <tt>$Revision$</tt>
  */
 public class ObjectModelBuilder
-   implements UnmarshallingContext, JBossXBParser.DtdAwareContentHandler
+   implements UnmarshallingContext, JBossXBParser.ContentHandler
 {
    /**
     * logger
@@ -98,7 +98,9 @@ public class ObjectModelBuilder
 
    // whether text content should be trimmed before it is set
    private boolean trimTextContent = true; //  for backwards compatibility
-   
+
+   private XSTypeDefinition currentType;
+
    private boolean trace = log.isTraceEnabled();
 
    // Public
@@ -207,7 +209,7 @@ public class ObjectModelBuilder
 
    public XSTypeDefinition getType()
    {
-      return null;
+      return currentType;
    }
 
    // Public
@@ -300,39 +302,6 @@ public class ObjectModelBuilder
       return root;
    }
 
-   public void startDTD(String name, String publicId, String systemId)
-   {
-      GenericObjectModelFactory factory = getFactory(systemId);
-
-      try
-      {
-         Class[] sig = {String.class, String.class, String.class};
-         Method startDTD = factory.getClass().getMethod("startDTD", sig);
-         Object[] args = {name, publicId, systemId};
-         startDTD.invoke(factory, args);
-      }
-      catch(Exception e)
-      {
-         log.debug("No startDTD found on factory: " + factory);
-      }
-   }
-   
-   public void endDTD()
-   {
-      // TODO: should use the factory it called in the startDTD
-      try
-      {
-         Class[] sig = {};
-         Method endDTD = defaultFactory.getClass().getMethod("endDTD", sig);
-         Object[] args = {};
-         endDTD.invoke(defaultFactory, args);
-      }
-      catch(Exception e)
-      {
-         log.debug("No endDTD found on factory: "+defaultFactory);
-      }      
-   }
-
    public void startElement(String namespaceURI,
                             String localName,
                             String qName,
@@ -340,6 +309,9 @@ public class ObjectModelBuilder
                             XSTypeDefinition type)
    {
       Object parent = accepted.isEmpty() ? root : peekAccepted();
+
+      // todo currentType assignment
+      currentType = type;
 
       Object element;
       if(!namespaceURI.equals(curNsSwitchingFactory))

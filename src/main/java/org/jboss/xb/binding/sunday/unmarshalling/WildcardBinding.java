@@ -44,12 +44,10 @@ public class WildcardBinding
    private QName qName;
    private SchemaBindingResolver schemaResolver;
    private short pc;
-
    private ParticleHandler unresolvedElementHandler;
    private CharactersHandler unresolvedCharactersHandler;
    private ObjectLocalMarshaller unresolvedMarshaller;
    private ParticleHandler wildcardHandler;
-
 
    public WildcardBinding(SchemaBinding schema)
    {
@@ -144,7 +142,7 @@ public class WildcardBinding
    {
       this.unresolvedMarshaller = marshaller;
    }
-   
+
    public ElementBinding getElement(QName qName, Attributes attrs)
    {
       if(pc == PC_SKIP)
