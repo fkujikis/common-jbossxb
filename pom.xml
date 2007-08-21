@@ -1,19 +1,41 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <parent>
-    <groupId>org.jboss</groupId>
+    <groupId>jboss</groupId>
     <artifactId>jboss-parent</artifactId>
-    <version>3</version>
+    <version>1</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
+  <groupId>jboss</groupId>
   <artifactId>jbossxb</artifactId>
   <packaging>jar</packaging>
-  <version>2.0.0-SNAPSHOT</version>
+  <version>1.0.0.GA</version>
   <name>JBoss XML Binding</name>
   <url>http://www.jboss.org</url>
   <description>JBoss XML Binding</description>
-  <scm>
-    <connection>scm:svn:https://svn.jboss.org/repos/common/jbossxb/trunk</connection>
-  </scm>
+  <licenses>
+   <license>
+      <name>lgpl</name>
+      <url>http://repository.jboss.com/licenses/lgpl.txt</url>
+   </license>
+  </licenses>
+  <organization>
+    <name>JBoss Inc.</name>
+    <url>http://www.jboss.org</url>
+  </organization>
+ 
+  <repositories>
+    <repository>
+      <id>jboss</id>
+      <name>JBoss Inc. Repository</name>
+      <layout>default</layout>
+      <url>http://repository.jboss.com/maven2/</url>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
+  
   <build>
     <finalName>jboss-xml-binding</finalName>
     <plugins>
@@ -31,73 +53,43 @@
         </configuration>
       </plugin>  
       <plugin>
-        <artifactId>maven-release-plugin</artifactId>
-        <configuration>
-          <!-- The tagBase property is needed during the release process so that the maven release plugin
-            will create the release tag in the appropriate location. -->
-          <tagBase>https://svn.jboss.org/repos/common/jbossxb/tags</tagBase>
-        </configuration>
-      </plugin>
-      <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
+          <printSummary>true</printSummary>
+          <disableXmlReport>false</disableXmlReport>
           <testFailureIgnore>true</testFailureIgnore>
           <includes>
-            <include>**/*TestCase.java</include>
+            <include>**/**TestCase.java</include>
           </includes>
           <forkMode>pertest</forkMode> <!-- required to correctly run the PojoServer tests -->
         </configuration>
       </plugin>    
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-report-plugin</artifactId>
+      </plugin>    
     </plugins>
-  </build>  
-  <repositories>
-    <repository>
-      <id>repository.jboss.org</id>
-      <name>JBoss Repository</name>
-      <layout>default</layout>
-      <url>http://repository.jboss.org/maven2/</url>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-    <repository>
-      <id>snapshots.jboss.org</id>
-      <name>JBoss Snapshot Repository</name>
-      <layout>default</layout>
-      <url>http://snapshots.jboss.org/maven2/</url>
-      <releases>
-        <enabled>false</enabled>
-      </releases>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-    </repository>
-  </repositories>
+  </build>
+
   <dependencies>
     <dependency>
       <groupId>jboss</groupId>
-      <artifactId>jboss-common-logging-spi</artifactId>
-      <version>2.0.4.GA</version>
+      <artifactId>jboss-common</artifactId>
+      <version>1.2.0.GA</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>jboss</groupId>
-      <artifactId>jboss-common-logging-log4j</artifactId>
-      <version>2.0.4.GA</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>jboss</groupId>
-      <artifactId>jboss-common-core</artifactId>
-      <version>2.0.4.GA</version>
+      <groupId>oswego-concurrent</groupId>
+      <artifactId>concurrent</artifactId>
+      <version>1.3.4</version>
       <scope>compile</scope>
-    </dependency>
+    </dependency> 
     <dependency>
-      <groupId>jboss</groupId>
-      <artifactId>jboss-test</artifactId>
-      <version>1.0.0.GA</version>
-      <scope>test</scope>
-    </dependency>
+      <groupId>sun-jaf</groupId>
+      <artifactId>activation</artifactId>
+      <version>1.0.2</version>
+      <scope>compile</scope>
+    </dependency> 
     <dependency>
       <groupId>apache-xerces</groupId>
       <artifactId>xercesImpl</artifactId>
@@ -111,16 +103,30 @@
       <scope>compile</scope>
     </dependency>         
     <dependency>
+      <groupId>apache-log4j</groupId>
+      <artifactId>log4j</artifactId>
+      <version>1.2.14</version>
+      <scope>test</scope>
+    </dependency> 
+    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>3.8.1</version>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>javax.activation</groupId>
-      <artifactId>activation</artifactId>
-      <version>1.0.2</version>
-      <scope>compile</scope>
-    </dependency> 
-  </dependencies>
+      <groupId>jboss.jboss-test</groupId>
+      <artifactId>jboss-test</artifactId>
+      <version>1.0.0.CR1</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>  
+  <distributionManagement>
+    <repository>
+      <id>cvs-file-repository</id>
+      <!-- Set maven.cvs.root in your settings.xml -->
+      <url>file://${maven.cvs.root}</url>
+    </repository>
+  </distributionManagement>
 </project>
+

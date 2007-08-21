@@ -54,6 +54,7 @@ public class TypeBinding
    /** Map<QName, AttributeBinding>  */
    private Map attrs = Collections.EMPTY_MAP;
    private ParticleHandler handler;//todo default handler is now in SundayContentHandler.
+   //private ParticleHandler handler = DefaultHandlers.ELEMENT_HANDLER;
    private CharactersHandler charactersHandler;
    private ClassMetaData classMetaData;
    private ValueMetaData valueMetaData;
@@ -67,7 +68,6 @@ public class TypeBinding
    private ValueAdapter valueAdapter = ValueAdapter.NOOP;
    private TermBeforeMarshallingCallback beforeMarshallingCallback;
    private TermBeforeSetParentCallback beforeSetParentCallback;
-   
    private Boolean startElementCreatesObject;
    private Boolean simple;
 
@@ -82,11 +82,6 @@ public class TypeBinding
    private XOPUnmarshaller xopUnmarshaller;
    private XOPMarshaller xopMarshaller;
 
-   /** Map<QName, List<ElementInterceptor>>
-    * these are local element interceptors that are "added" to the interceptor stack
-    * defined in the element binding */
-   private Map interceptors = Collections.EMPTY_MAP;
-   
    public TypeBinding()
    {
       this.qName = null;
@@ -264,26 +259,21 @@ public class TypeBinding
 
       return expandedAttrs;
    }
-   
+
    public AttributeBinding addAttribute(QName name, TypeBinding type, AttributeHandler handler)
    {
       AttributeBinding attr = new AttributeBinding(schemaBinding, name, type, handler);
-      addAttribute(attr);
-      return attr;
-   }
-
-   public void addAttribute(AttributeBinding attr)
-   {
       switch(attrs.size())
       {
          case 0:
-            attrs = Collections.singletonMap(attr.getQName(), attr);
+            attrs = Collections.singletonMap(name, attr);
             break;
          case 1:
             attrs = new HashMap(attrs);
          default:
-            attrs.put(attr.getQName(), attr);
+            attrs.put(name, attr);
       }
+      return attr;
    }
 
    public Collection getAttributes()
@@ -296,11 +286,6 @@ public class TypeBinding
       return charactersHandler;
    }
 
-   public void setCharactersHandler(CharactersHandler charactersHandler)
-   {
-      this.charactersHandler = charactersHandler;
-   }
-   
    /**
     * This method will create a new simple type binding with the passed in characters handler
     * and set this simple type as the simple type of the complex type the method was invoked on.
@@ -331,19 +316,6 @@ public class TypeBinding
       return handler;
    }
 
-   /**
-    * Pushes a new interceptor for the specified element.
-    * If the element has a global scope in the schema,
-    * this interceptor will invoked only when the element is found to be a child
-    * of this type. This is the difference between the local interceptors
-    * added with this method and the interceptors added directly to the
-    * element binding.
-    * When element is started, local interceptors are invoked before the interceptors
-    * from the element binding. In the endElement the order is reversed.
-    * 
-    * @param qName
-    * @param interceptor
-    */
    public void pushInterceptor(QName qName, ElementInterceptor interceptor)
    {
       ElementBinding el = getElement(qName);
@@ -351,48 +323,9 @@ public class TypeBinding
       {
          el = addElement(qName, new TypeBinding());
       }
-      //el.pushInterceptor(interceptor);
-      
-      List intList = (List) interceptors.get(qName);
-      if(intList == null)
-      {
-         intList = Collections.singletonList(interceptor);
-         switch(interceptors.size())
-         {
-            case 0:
-               interceptors = Collections.singletonMap(qName, intList);
-               break;
-            case 1:
-               interceptors = new HashMap(interceptors);
-            default:
-               interceptors.put(qName, intList);
-         }
-      }
-      else
-      {
-         if(intList.size() == 1)
-         {
-            intList = new ArrayList(intList);
-            interceptors.put(qName, intList);
-         }
-         intList.add(interceptor);
-      }
+      el.pushInterceptor(interceptor);
    }
 
-   /**
-    * Returns a list of local interceptors for the element.
-    * If there are no local interceptors for the element then
-    * an empty list is returned.
-    * 
-    * @param qName
-    * @return
-    */
-   public List getInterceptors(QName qName)
-   {
-      List list = (List) interceptors.get(qName);
-      return list == null ? Collections.EMPTY_LIST : list;
-   }
-   
    public TypeBinding getBaseType()
    {
       return baseType;
@@ -405,9 +338,6 @@ public class TypeBinding
 
    public boolean isSimple()
    {
-      // actually, a type can be complex when the particle is null and
-      // there are no attributes. But the XsdBinder will set the value of simple
-      // to false. This check is for schema bindings created programmatically
       return simple == null ? particle == null && attrs.isEmpty() : simple.booleanValue();
    }
 
@@ -416,11 +346,6 @@ public class TypeBinding
       this.simple = simple ? Boolean.TRUE : Boolean.FALSE;
    }
 
-   public boolean isTextContentAllowed()
-   {
-      return simpleType != null || isSimple();
-   }
-   
    public ClassMetaData getClassMetaData()
    {
       return classMetaData;
@@ -511,50 +436,30 @@ public class TypeBinding
       this.valueAdapter = valueAdapter;
    }
 
-   /**
-    * Whether the ParticleHandler should return a non-null object from its
-    * startParticle method.
-    * This should be true for any type that has child elements and/or attributes,
-    * i.e. complex types. If the type is simple or it's a complex type that should
-    * be treated as a simple type then this value should be false.
-    * 
-    * @return
-    */
    public boolean isStartElementCreatesObject()
    {
       return startElementCreatesObject == null ?
          particle != null || !attrs.isEmpty() : startElementCreatesObject.booleanValue();
    }
 
-   /**
-    * Whether the ParticleHandler should return a non-null object from its
-    * startParticle method.
-    * This should be true for any type that has child elements and/or attributes,
-    * i.e. complex types. If the type is simple or it's a complex type that should
-    * be treated as a simple type then this value should be false.
-    * 
-    * @param startElementCreatesObject
-    */
    public void setStartElementCreatesObject(boolean startElementCreatesObject)
    {
       this.startElementCreatesObject = startElementCreatesObject ? Boolean.TRUE : Boolean.FALSE;
    }
 
-   private boolean initializedWildcard;
+   public void setWildcard(WildcardBinding wildcard)
+   {
+      this.wildcard = wildcard;
+   }
+
    public WildcardBinding getWildcard()
    {
-      if(initializedWildcard)
-      {
-         return wildcard;
-      }
-      
-      if(particle != null)
-      {
-         wildcard = getWildcard(particle.getTerm());
-         initializedWildcard = true;
-      }
-      
       return wildcard;
+   }
+
+   public boolean hasWildcard()
+   {
+      return wildcard != null;
    }
 
    public ParticleBinding getParticle()
@@ -685,34 +590,5 @@ public class TypeBinding
    public String toString()
    {
       return super.toString() + "[" + qName + "]";
-   }
-
-   private static WildcardBinding getWildcard(TermBinding term)
-   {
-      if(term.isWildcard())
-      {
-         return (WildcardBinding) term;
-      }     
-      
-      if(term.isModelGroup())
-      {
-         ModelGroupBinding group = (ModelGroupBinding) term;
-         for(Iterator i = group.getParticles().iterator(); i.hasNext();)
-         {
-            term = ((ParticleBinding)i.next()).getTerm();
-            if(term.isWildcard())
-            {
-               return (WildcardBinding)term;
-            }
-            else if(term.isModelGroup())
-            {
-               WildcardBinding wc = getWildcard(term);
-               if (wc != null)
-                  return wc;
-            }
-         }
-      }
-      
-      return null;
    }
 }
