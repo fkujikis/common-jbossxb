@@ -91,10 +91,7 @@ public class ElementBinding
          case 1:
             interceptors = new ArrayList(interceptors);
          default:
-         {
-            if( interceptors.contains(interceptor) == false )
-               interceptors.add(interceptor);
-         }
+            interceptors.add(interceptor);
 
       }
    }

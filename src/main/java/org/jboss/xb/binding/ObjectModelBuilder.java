@@ -47,7 +47,7 @@ import java.lang.reflect.Method;
  * @version <tt>$Revision$</tt>
  */
 public class ObjectModelBuilder
-   implements UnmarshallingContext, JBossXBParser.DtdAwareContentHandler
+   implements UnmarshallingContext, JBossXBParser.ContentHandler
 {
    /**
     * logger
@@ -96,9 +96,8 @@ public class ObjectModelBuilder
     */
    private final NamespaceRegistry nsRegistry = new NamespaceRegistry();
 
-   // whether text content should be trimmed before it is set
-   private boolean trimTextContent = true; //  for backwards compatibility
-   
+   private XSTypeDefinition currentType;
+
    private boolean trace = log.isTraceEnabled();
 
    // Public
@@ -165,16 +164,6 @@ public class ObjectModelBuilder
       return nsRegistry;
    }
 
-   public boolean isTrimTextContent()
-   {
-      return trimTextContent;
-   }
-   
-   public void setTrimTextContent(boolean trimTextContent)
-   {
-      this.trimTextContent = trimTextContent;
-   }   
-
    /**
     * Construct a QName from a value
     *
@@ -207,7 +196,7 @@ public class ObjectModelBuilder
 
    public XSTypeDefinition getType()
    {
-      return null;
+      return currentType;
    }
 
    // Public
@@ -300,39 +289,6 @@ public class ObjectModelBuilder
       return root;
    }
 
-   public void startDTD(String name, String publicId, String systemId)
-   {
-      GenericObjectModelFactory factory = getFactory(systemId);
-
-      try
-      {
-         Class[] sig = {String.class, String.class, String.class};
-         Method startDTD = factory.getClass().getMethod("startDTD", sig);
-         Object[] args = {name, publicId, systemId};
-         startDTD.invoke(factory, args);
-      }
-      catch(Exception e)
-      {
-         log.debug("No startDTD found on factory: " + factory);
-      }
-   }
-   
-   public void endDTD()
-   {
-      // TODO: should use the factory it called in the startDTD
-      try
-      {
-         Class[] sig = {};
-         Method endDTD = defaultFactory.getClass().getMethod("endDTD", sig);
-         Object[] args = {};
-         endDTD.invoke(defaultFactory, args);
-      }
-      catch(Exception e)
-      {
-         log.debug("No endDTD found on factory: "+defaultFactory);
-      }      
-   }
-
    public void startElement(String namespaceURI,
                             String localName,
                             String qName,
@@ -340,6 +296,9 @@ public class ObjectModelBuilder
                             XSTypeDefinition type)
    {
       Object parent = accepted.isEmpty() ? root : peekAccepted();
+
+      // todo currentType assignment
+      currentType = type;
 
       Object element;
       if(!namespaceURI.equals(curNsSwitchingFactory))
@@ -393,17 +352,10 @@ public class ObjectModelBuilder
          Object acceptedElement = peekAccepted();
          if(element.characters != null && element.characters.length() > 0)
          {
-            if(trimTextContent)
+            String characters = element.characters.toString().trim();
+            if(characters.length() > 0)
             {
-               String characters = element.characters.toString().trim();
-               if (characters.length() > 0)
-               {
-                  curFactory.setValue(acceptedElement, this, namespaceURI, localName, characters);
-               }
-            }
-            else
-            {
-               curFactory.setValue(acceptedElement, this, namespaceURI, localName, element.characters.toString());
+               curFactory.setValue(acceptedElement, this, namespaceURI, localName, characters);
             }
          }
       }

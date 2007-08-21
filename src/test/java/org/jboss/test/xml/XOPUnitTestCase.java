@@ -62,8 +62,9 @@ import junit.framework.TestSuite;
  * @version <tt>$Revision$</tt>
  */
 public class XOPUnitTestCase
-      extends AbstractJBossXBTest
+    extends AbstractJBossXBTest
 {
+
    public static final TestSuite suite()
    {
       return new TestSuite(XOPUnitTestCase.class);
@@ -268,10 +269,10 @@ public class XOPUnitTestCase
 
                String localPart = e.getQName().getLocalPart();
                if("image".equals(localPart) ||
-                     "sig".equals(localPart) ||
-                     "imageWithContentType".equals(localPart) ||
-                     "octets".equals(localPart) ||
-                     "jpeg".equals(localPart))
+                   "sig".equals(localPart) ||
+                   "imageWithContentType".equals(localPart) ||
+                   "octets".equals(localPart) ||
+                   "jpeg".equals(localPart))
                {
                   assertEquals("expected " + byte[].class + " for " + localPart, byte[].class, propType);
                }
@@ -347,7 +348,7 @@ public class XOPUnitTestCase
             // alexey: the following shouldn't be used.
             // callbacks should be set on the types and/or elements
             // that can have xop:Include as their content
-
+            
             // xop:Include
             // Uncomment the following lines in order to intercept the
             // XOPUnmarshaller result _before_ the actual setter is invoked
@@ -600,13 +601,13 @@ public class XOPUnitTestCase
    public void testTopLevelUnmarshalling() throws Exception
    {
       String xsd =
-            "<schema" +
-                  "  xmlns='http://www.w3.org/2001/XMLSchema'" +
-                  "  xmlns:xmime='http://www.w3.org/2005/05/xmlmime'" +
-                  "  targetNamespace='http://www.jboss.org/xml/test/xop'>" +
-                  "  <import namespace='http://www.w3.org/2005/05/xmlmime' schemaLocation='xmlmime.xsd'/>" +
-                  "  <element name='applxml' xmime:expectedContentTypes='application/xml' type='xmime:base64Binary'/>" +
-                  "</schema>";
+          "<schema" +
+              "  xmlns='http://www.w3.org/2001/XMLSchema'" +
+              "  xmlns:xmime='http://www.w3.org/2005/05/xmlmime'" +
+              "  targetNamespace='http://www.jboss.org/xml/test/xop'>" +
+              "  <import namespace='http://www.w3.org/2005/05/xmlmime' schemaLocation='xmlmime.xsd'/>" +
+              "  <element name='applxml' xmime:expectedContentTypes='application/xml' type='xmime:base64Binary'/>" +
+              "</schema>";
 
       DefaultSchemaResolver resolver = new DefaultSchemaResolver();
       String xmimeXsd = getSchemaLocation(getClass(), "xmlmime.xsd");
@@ -617,9 +618,9 @@ public class XOPUnitTestCase
       schema.setXopUnmarshaller(XOP_ENABLED_UNMARSH);
 
       String xml =
-            "<applxml xmlns='http://www.jboss.org/xml/test/xop'>" +
-                  "  <xop:Include href='cid:applxml' xmlns:xop='http://www.w3.org/2004/08/xop/include'/>" +
-                  "</applxml>";
+          "<applxml xmlns='http://www.jboss.org/xml/test/xop'>" +
+              "  <xop:Include href='cid:applxml' xmlns:xop='http://www.w3.org/2004/08/xop/include'/>" +
+              "</applxml>";
 
       Unmarshaller unmarshaller = UnmarshallerFactory.newInstance().newUnmarshaller();
       Object o = unmarshaller.unmarshal(new StringReader(xml), schema);
@@ -631,7 +632,7 @@ public class XOPUnitTestCase
    // Private
 
    private String readXml(String name)
-         throws IOException
+       throws IOException
    {
       String testXml = getResource(name).getFile();
       FileInputStream fis = new FileInputStream(testXml);
@@ -642,7 +643,7 @@ public class XOPUnitTestCase
    }
 
    private static String marshal(XOPMarshaller xopMarshaller)
-         throws IOException, SAXException
+       throws IOException, SAXException
    {
       E e = new E();
       e.image = "image".getBytes();
@@ -651,7 +652,7 @@ public class XOPUnitTestCase
    }
 
    private static String marshal(XOPMarshaller xopMarshaller, E e)
-         throws IOException, SAXException
+       throws IOException, SAXException
    {
       SCHEMA.setXopMarshaller(xopMarshaller);
       StringWriter writer = new StringWriter();
@@ -663,17 +664,17 @@ public class XOPUnitTestCase
    private static String getOptimizedXml(String elementName)
    {
       return
-            "<e xmlns='http://www.jboss.org/xml/test/xop'>" +
-                  "  <" +
-                  elementName +
-                  ">" +
-                  "    <xop:Include xmlns:xop='http://www.w3.org/2004/08/xop/include' href='cid:" +
-                  elementName +
-                  "'/>" +
-                  "  </" +
-                  elementName +
-                  ">" +
-                  "</e>";
+          "<e xmlns='http://www.jboss.org/xml/test/xop'>" +
+              "  <" +
+              elementName +
+              ">" +
+              "    <xop:Include xmlns:xop='http://www.w3.org/2004/08/xop/include' href='cid:" +
+              elementName +
+              "'/>" +
+              "  </" +
+              elementName +
+              ">" +
+              "</e>";
    }
 
    // Inner
@@ -692,4 +693,5 @@ public class XOPUnitTestCase
 
       public String xopContent;
    }
+
 }
