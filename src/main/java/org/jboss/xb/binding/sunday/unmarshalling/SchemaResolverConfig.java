@@ -32,7 +32,6 @@ import org.jboss.xb.binding.sunday.unmarshalling.DefaultSchemaResolver;
  * SchemaResolverConfig.
  * 
  * @author <a href="adrian@jboss.com">Adrian Brock</a>
- * @author Scott.Stark@jboss.org
  * @version $Revision$
  */
 public class SchemaResolverConfig implements SchemaResolverConfigMBean
@@ -51,21 +50,6 @@ public class SchemaResolverConfig implements SchemaResolverConfigMBean
 
    /** The parse annotations by namespace */
    protected Properties parseAnnotations;
-
-   /** The binding classes by namespace */
-   protected Properties bindingClasses;
-
-   /** The binding classes by schemaLocation */
-   protected Properties bindingClassesByLocation;
-
-   public boolean getCacheResolvedSchemas()
-   {
-      return resolver.isCacheResolvedSchemas();
-   }
-   public void setCacheResolvedSchemas(boolean flag)
-   {
-      resolver.setCacheResolvedSchemas(flag);
-   }
 
    public Properties getSchemaInitializers()
    {
@@ -134,63 +118,4 @@ public class SchemaResolverConfig implements SchemaResolverConfigMBean
          }
       }
    }
-
-   public Properties getBindingClassesByLocations()
-   {
-      return bindingClassesByLocation;
-   }
-
-   public void setBindingClassesByLocations(Properties bindingClassesByLocation)
-   {
-      this.bindingClassesByLocation = bindingClassesByLocation;
-      if (bindingClassesByLocation != null && bindingClassesByLocation.size() != 0)
-      {
-         ClassLoader loader = Thread.currentThread().getContextClassLoader();
-         for (Iterator i = bindingClassesByLocation.entrySet().iterator(); i.hasNext();)
-         {
-            Map.Entry entry = (Map.Entry) i.next();
-            String schemaLocation = (String) entry.getKey();
-            String value = (String) entry.getValue();
-            try
-            {
-               Class clazz = loader.loadClass(value);
-               resolver.addClassBindingForLocation(schemaLocation, clazz);
-            }
-            catch(ClassNotFoundException e)
-            {
-               log.warn("Failed to load class: "+value, e);
-            }
-         }
-      }
-   }
-
-   public Properties getBindingClasses()
-   {
-      return bindingClasses;
-   }
-
-   public void setBindingClasses(Properties bindingClasses)
-   {
-      this.bindingClasses = bindingClasses;
-      if (bindingClasses != null && bindingClasses.size() != 0)
-      {
-         ClassLoader loader = Thread.currentThread().getContextClassLoader();
-         for (Iterator i = bindingClasses.entrySet().iterator(); i.hasNext();)
-         {
-            Map.Entry entry = (Map.Entry) i.next();
-            String namespace = (String) entry.getKey();
-            String value = (String) entry.getValue();
-            try
-            {
-               Class clazz = loader.loadClass(value);
-               resolver.addClassBinding(namespace, clazz);
-            }
-            catch(ClassNotFoundException e)
-            {
-               log.warn("Failed to load class: "+value, e);
-            }
-         }
-      }
-   }
-
 }

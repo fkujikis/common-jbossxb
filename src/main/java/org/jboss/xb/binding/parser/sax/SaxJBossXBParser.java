@@ -59,7 +59,6 @@ public class SaxJBossXBParser
       enableXInclude();
    }
 
-   private final SAXParser parser;
    private final XMLReader reader;
    private JBossXBParser.ContentHandler contentHandler;
    private DelegatingContentHandler delegateHandler;
@@ -87,24 +86,10 @@ public class SaxJBossXBParser
    public SaxJBossXBParser()
       throws JBossXBException
    {
+      SAXParser parser;
       try
       {
          parser = saxFactory.newSAXParser();
-
-         StringBuffer sb = new StringBuffer();
-         sb.append("Created parser: ").append(parser)
-         .append(", isNamespaceAware: ").append(parser.isNamespaceAware())
-         .append(", isValidating: ").append(parser.isValidating())
-         .append(", isXIncludeAware: ");
-         try
-         {
-            sb.append(parser.isXIncludeAware());
-         }
-         catch(UnsupportedOperationException e)
-         {
-            sb.append("unsupported operation '").append(e.getMessage()).append('\'');
-         }
-         log.debug(sb.toString());
       }
       catch(Exception e)
       {
@@ -124,15 +109,6 @@ public class SaxJBossXBParser
       reader.setContentHandler(delegateHandler);
       reader.setErrorHandler(MetaDataErrorHandler.INSTANCE);
       reader.setEntityResolver(new JBossEntityResolver());
-      // LexicalHandler
-      try
-      {
-         reader.setProperty("http://xml.org/sax/properties/lexical-handler", delegateHandler);
-      }
-      catch(Exception e)
-      {
-         log.debug("LexicalHandler", e);
-      }
 
 /*
       setFeature(Unmarshaller.VALIDATION, true);
@@ -168,7 +144,6 @@ public class SaxJBossXBParser
       try
       {
          reader.setFeature(name, value);
-         log.debug(name+" set to: "+reader.getFeature(name));
       }
       catch(SAXException e)
       {
@@ -182,15 +157,11 @@ public class SaxJBossXBParser
       trace = log.isTraceEnabled();
       try
       {
-         log.debug("Using parser: "+parser
-               + ", isNamespaceAware: "+parser.isValidating()
-               + ", isValidating: "+parser.isValidating()
-               + ", isXIncludeAware: "+parser.isXIncludeAware()
-               );
          reader.parse(systemId);
       }
       catch(Exception e)
       {
+e.printStackTrace();
          throw new JBossXBException("Failed to parse source: " + getLocationAsString(systemId), e);
       }
    }
@@ -201,11 +172,6 @@ public class SaxJBossXBParser
       trace = log.isTraceEnabled();
       try
       {
-         log.debug("Using parser: "+parser
-               + ", isNamespaceAware: "+parser.isValidating()
-               + ", isValidating: "+parser.isValidating()
-               + ", isXIncludeAware: "+parser.isXIncludeAware()
-               );
          reader.parse(new InputSource(is));
       }
       catch(Exception e)
@@ -220,11 +186,6 @@ public class SaxJBossXBParser
       trace = log.isTraceEnabled();
       try
       {
-         log.debug("Using parser: "+parser
-               + ", isNamespaceAware: "+parser.isValidating()
-               + ", isValidating: "+parser.isValidating()
-               + ", isXIncludeAware: "+parser.isXIncludeAware()
-               );
          this.reader.parse(new InputSource(reader));
       }
       catch(Exception e)
@@ -255,59 +216,10 @@ public class SaxJBossXBParser
    // Inner
 
    private final class DelegatingContentHandler
-      implements org.xml.sax.ContentHandler,
-      org.xml.sax.ext.LexicalHandler
+      implements org.xml.sax.ContentHandler
    {
       Locator locator;
-      // Begin LexicalHandler
-
-      public void comment(char[] ch, int start, int length) throws SAXException
-      {
-         // TODO Auto-generated method stub
-         
-      }
-
-      public void startDTD(String name, String publicId, String systemId) throws SAXException
-      {
-         if( contentHandler instanceof DtdAwareContentHandler )
-         {
-            DtdAwareContentHandler dach = (DtdAwareContentHandler) contentHandler;
-            dach.startDTD(name, publicId, systemId);
-         }
-      }
-      public void endDTD() throws SAXException
-      {
-         if( contentHandler instanceof DtdAwareContentHandler )
-         {
-            DtdAwareContentHandler dach = (DtdAwareContentHandler) contentHandler;
-            dach.endDTD();
-         }
-      }
-
-      public void startEntity(String name) throws SAXException
-      {
-         // TODO Auto-generated method stub
-         
-      }
-      public void endEntity(String name) throws SAXException
-      {
-         // TODO Auto-generated method stub
-         
-      }
-
-      public void startCDATA() throws SAXException
-      {
-         // TODO Auto-generated method stub
-         
-      }
-      public void endCDATA() throws SAXException
-      {
-         // TODO Auto-generated method stub
-         
-      }
-
-      // End LexicalHandler
-
+      
       public void endDocument()
       {
       }

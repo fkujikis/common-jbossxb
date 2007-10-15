@@ -267,27 +267,10 @@ public class PojoServerUnitTestCase
             parameters.add(parameter);
          }
       });
-
-      ModelGroupBinding valueGroup = schemaBinding.getGroup(valueGroupQName);
-      for(Iterator i = valueGroup.getParticles().iterator(); i.hasNext();)
-      {
-         TermBinding term = ((ParticleBinding)i.next()).getTerm();
-         if(!term.isWildcard())
-         {
-            ElementBinding e = (ElementBinding) term;
-            if(e.getQName().equals(nullQName))
-            {
-               e.pushInterceptor(NULLVALUES);
-            }
-            else
-            {
-               e.pushInterceptor(VALUES);
-            }
-         }
-      }
       
       // parameter binding
       TypeBinding parameterType = schemaBinding.getType(parameterTypeQName);
+      configureValueBindings(parameterType);
       parameterType.setHandler(new DefaultElementHandler()
       {
          public Object startElement(Object parent, QName name, ElementBinding element)
@@ -510,6 +493,7 @@ public class PojoServerUnitTestCase
 
       // property binding
       TypeBinding propertyType = schemaBinding.getType(propertyTypeQName);
+      configureValueBindings(propertyType);
       propertyType.setHandler(new DefaultElementHandler()
       {
          public Object startElement(Object parent, QName name, ElementBinding element)
@@ -757,6 +741,7 @@ public class PojoServerUnitTestCase
 
       // value binding
       TypeBinding valueType = schemaBinding.getType(valueTypeQName);
+      configureValueBindings(valueType);
       valueType.setHandler(new DefaultElementHandler()
       {
          public Object startElement(Object parent, QName name, ElementBinding element)
@@ -1052,8 +1037,37 @@ public class PojoServerUnitTestCase
             }
          }
       });
+
+      configureValueBindings(collectionType);
    }
    
+   private static void configureValueBindings(TypeBinding typeBinding)
+   {
+      // type has values
+      typeBinding.pushInterceptor(valueQName, VALUES);
+
+      // type has injections
+      typeBinding.pushInterceptor(injectQName, VALUES);
+
+      // type can take a collection
+      typeBinding.pushInterceptor(collectionQName, VALUES);
+
+      // type can take a list
+      typeBinding.pushInterceptor(listQName, VALUES);
+
+      // type can take a set
+      typeBinding.pushInterceptor(setQName, VALUES);
+
+      // type can take an array
+      typeBinding.pushInterceptor(arrayQName, VALUES);
+
+      // type can take a map
+      typeBinding.pushInterceptor(mapQName, VALUES);
+
+      // type has a null
+      typeBinding.pushInterceptor(nullQName, NULLVALUES);
+   }
+
    private static class MapEntry
    {
       public Object key;
