@@ -119,10 +119,8 @@ public interface GenericValueContainer
                   {
                      try
                      {
-                        Class[] sig = null;
-                        ctor = wrapperType.getConstructor(sig);
-                        Object[] args = null;
-                        result = ctor.newInstance(args);
+                        ctor = wrapperType.getConstructor(null);
+                        result = ctor.newInstance(null);
                         RtUtil.set(result, arr, itemProp, null, false, null);
                      }
                      catch(NoSuchMethodException e)

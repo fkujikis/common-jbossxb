@@ -58,12 +58,6 @@ public class UnmarshallerImpl implements Unmarshaller
    public void setValidation(boolean validation) throws JBossXBException
    {
       parser.setFeature(VALIDATION, validation);
-      /* Only set DYNAMIC_VALIDATION to false. Setting this to true
-         if its not already requires a document to have a DOCTYPE declaring
-         the root element
-      */
-      if( validation == false )
-         parser.setFeature(DYNAMIC_VALIDATION, false);
    }
 
    public void setSchemaValidation(boolean validation) throws JBossXBException

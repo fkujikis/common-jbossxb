@@ -150,6 +150,8 @@ public class MappingTestCase
       StringReader reader = new StringReader(xml);
       Unmarshaller unmarshaller = UnmarshallerFactory.newInstance().newUnmarshaller();
       Root unmarshalled = (Root)unmarshaller.unmarshal(reader, new MappingObjectModelFactory(), null);
+      log.info("unmarhalled:\n" + unmarshalled);
+
       assertEquals(root, unmarshalled);
 
       log.debug("testChoice> done in " + (System.currentTimeMillis() - startTime));
@@ -168,6 +170,8 @@ public class MappingTestCase
       StringReader reader = new StringReader(xml);
       Unmarshaller unmarshaller = UnmarshallerFactory.newInstance().newUnmarshaller();
       Parent unmarshalled = (Parent)unmarshaller.unmarshal(reader, new MappingObjectModelFactory(), null);
+      log.info("unmarhalled:\n" + unmarshalled);
+
       assertEquals(parent, unmarshalled);
 
       log.debug("testImmutable> done in " + (System.currentTimeMillis() - startTime));
@@ -187,6 +191,8 @@ public class MappingTestCase
          writer
       );
 
+      log.info("parent:\n" + parent);
+      log.info("marshalled root:\n" + writer.getBuffer());
       return writer.getBuffer().toString();
    }
 
@@ -225,6 +231,7 @@ public class MappingTestCase
          writer
       );
 
+      log.info("marshalled root:\n" + writer.getBuffer());
       return writer.getBuffer().toString();
    }
 

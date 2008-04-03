@@ -44,38 +44,12 @@ public abstract class ModelGroupBinding
 {
    protected final Logger log = Logger.getLogger(getClass());
 
-   /** The qualifed name for global groups */
-   protected QName qName;
-
    protected boolean requiredParticle;
-   protected ParticleHandler handler = DefaultHandlers.MODEL_GROUP_HANDLER;
+   protected ParticleHandler handler = DefaultHandlers.ELEMENT_HANDLER;
 
    protected ModelGroupBinding(SchemaBinding schema)
    {
       super(schema);
-   }
-
-   /**
-    * Get the qName.
-    * 
-    * @return the qName.
-    */
-   public QName getQName()
-   {
-      return qName;
-   }
-
-   /**
-    * Set the qName.
-    * 
-    * @param name the qName.
-    * @throws IllegalArgumentException for a null qName
-    */
-   public void setQName(QName name)
-   {
-      if (name == null)
-         throw new IllegalArgumentException("Null name");
-      qName = name;
    }
 
    public ParticleHandler getHandler()
@@ -146,7 +120,7 @@ public abstract class ModelGroupBinding
    {
       return false;
    }
-   
+
    public boolean isElement()
    {
       return false;
@@ -194,8 +168,6 @@ public abstract class ModelGroupBinding
 
       public abstract int getOccurence();
 
-      public abstract boolean isWildcardContent();
-      
       // Protected
 
       protected abstract List startElement(QName qName,

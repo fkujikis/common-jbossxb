@@ -22,11 +22,13 @@
 package org.jboss.xb.binding.sunday.unmarshalling;
 
 import org.jboss.logging.Logger;
+import org.jboss.xb.binding.sunday.unmarshalling.DefaultSchemaResolver;
+import org.jboss.xb.binding.sunday.unmarshalling.SchemaBindingResolver;
+import org.jboss.xb.binding.sunday.unmarshalling.SchemaResolverFactory;
 
 /**
  * SingletonSchemaResolverFactory.
  * 
- * @author <a href="ales.justin@jboss.com">Ales Justin</a>
  * @author <a href="adrian@jboss.com">Adrian Brock</a>
  * @version $Revision$
  */
@@ -56,21 +58,10 @@ public class SingletonSchemaResolverFactory implements SchemaResolverFactory
     */
    private SingletonSchemaResolverFactory()
    {
-      // old initializer 
-      //addSchema("urn:jboss:aop-beans:1.0", "org.jboss.aop.microcontainer.beans.xml.AOPBeansSchemaInitializer", Boolean.FALSE);
-      addSchema("urn:jboss:spring-beans:2.0", "org.jboss.spring.deployment.xml.SpringSchemaInitializer", Boolean.FALSE);
-      addSchema("urn:jboss:osgi-beans:1.0", "org.jboss.osgi.deployment.xml.OSGiSchemaInitializer", Boolean.FALSE);
-      addSchema("urn:jboss:seam-components:1.0", "org.jboss.seam.ioc.microcontainer.xml.SeamSchemaInitializer", Boolean.FALSE);
-      // new jaxb
-      addJaxbSchema("urn:jboss:aop-beans:1.0", "org.jboss.aop.microcontainer.beans.metadata.AOPDeployment");
-      addJaxbSchema("urn:jboss:bean-deployer", "org.jboss.kernel.plugins.deployment.AbstractKernelDeployment10");
-      addJaxbSchema("urn:jboss:bean-deployer:2.0", "org.jboss.kernel.plugins.deployment.AbstractKernelDeployment");
-      addJaxbSchema("urn:jboss:javabean:1.0", "org.jboss.javabean.plugins.jaxb.JavaBean10");
-      addJaxbSchema("urn:jboss:javabean:2.0", "org.jboss.javabean.plugins.jaxb.JavaBean20");
-      addJaxbSchema("urn:jboss:policy:1.0", "org.jboss.beans.metadata.plugins.policy.AbstractPolicyMetaData");
-      addJaxbSchema("urn:jboss:classloading:1.0", "org.jboss.classloading.spi.metadata.ClassLoadingMetaData10");
-      addJaxbSchema("urn:jboss:classloader:1.0", "org.jboss.classloading.spi.vfs.metadata.VFSClassLoaderFactory10");
-      addJaxbSchema("urn:jboss:deployers:2.0", "org.jboss.deployers.vfs.plugins.xb.SchemaResolverDeployerMetaData");
+      addSchema("urn:jboss:aop-beans:1.0", "org.jboss.aop.microcontainer.beans.xml.AOPBeansSchemaInitializer", Boolean.FALSE);
+      addSchema("urn:jboss:bean-deployer", "org.jboss.kernel.plugins.deployment.xml.BeanSchemaInitializer", Boolean.FALSE);
+      addSchema("urn:jboss:bean-deployer:2.0", "org.jboss.kernel.plugins.deployment.xml.BeanSchemaInitializer20", Boolean.FALSE);
+      addSchema("urn:jboss:javabean:1.0", "org.jboss.kernel.plugins.config.xml.JavaBeanSchemaInitializer", Boolean.FALSE);
    }
 
    public SchemaBindingResolver getSchemaBindingResolver()
@@ -90,14 +81,12 @@ public class SingletonSchemaResolverFactory implements SchemaResolverFactory
       try
       {
          resolver.addSchemaInitializer(namespace, initializer);
-         if (log.isTraceEnabled())
-            log.trace("Mapped initializer '" + namespace + "' to '" + initializer + "'");
+         log.trace("Mapped initializer '" + namespace + "' to '" + initializer + "'");
          return true;
       }
       catch (Exception ignored)
       {
-         if (log.isTraceEnabled())
-            log.trace("Ignored: ", ignored);
+         log.trace("Ignored: ", ignored);
          return false;
       }
    }
@@ -133,14 +122,12 @@ public class SingletonSchemaResolverFactory implements SchemaResolverFactory
       try
       {
          resolver.addSchemaLocation(namespace, location);
-         if (log.isTraceEnabled())
-            log.trace("Mapped location '" + namespace + "' to '" + location + "'");
+         log.trace("Mapped location '" + namespace + "' to '" + location + "'");
          return true;
       }
       catch (Exception ignored)
       {
-         if (log.isTraceEnabled())
-            log.trace("Ignored: ", ignored);
+         log.trace("Ignored: ", ignored);
          return false;
       }
    }
@@ -171,31 +158,6 @@ public class SingletonSchemaResolverFactory implements SchemaResolverFactory
    protected void setParseAnnotations(String namespace, Boolean parseAnnotations)
    {
       resolver.addSchemaParseAnnotations(namespace, parseAnnotations);
-      if (log.isTraceEnabled())
-         log.trace("Parse annotations '" + namespace + "' set to '" + parseAnnotations + "'");
-   }
-
-   /**
-    * Add a schema.
-    *
-    * @param namespace the namespace
-    * @param reference the schema reference class
-    * @return true when added
-    */
-   public boolean addJaxbSchema(String namespace, String reference)
-   {
-      try
-      {
-         resolver.addClassBinding(namespace, reference);
-         if (log.isTraceEnabled())
-            log.trace("Mapped '" + namespace + "' to '" + reference + "'");
-         return true;
-      }
-      catch (Exception ignored)
-      {
-         if (log.isTraceEnabled())
-            log.trace("Ignored: ", ignored);
-         return false;
-      }
+      log.trace("Parse annotations '" + namespace + "' set to '" + parseAnnotations + "'");
    }
 }
