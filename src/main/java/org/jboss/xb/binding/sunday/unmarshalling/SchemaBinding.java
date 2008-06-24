@@ -38,6 +38,7 @@ import org.jboss.xb.util.DomCharactersHandler;
 import org.jboss.xb.util.DomLocalMarshaller;
 import org.jboss.xb.util.DomParticleHandler;
 
+
 /**
  * A SchemaBinding is a collection of binding objects (TypeBinding,
  * ChoiceBinding, ElementBinding, ModelGroupBinding, SequenceBinding, WildcardBinding)
@@ -58,17 +59,13 @@ public class SchemaBinding
          return o;
       }
    };
-   
+
    /** The namespaces Set<String> */
    private Set namespaces = Collections.EMPTY_SET;
-   /** namespace to prefix map, used in xb builder during binding */
-   private Map<String, String> nsByPrefix = Collections.emptyMap();
    /** Map<QName, TypeBinding> for simple/complex types */
-   private Map<QName, TypeBinding> types = new HashMap<QName, TypeBinding>();
+   private Map types = new HashMap();
    /** Map<QName, ParticleBinding> for */
-   private Map<QName, ParticleBinding> elements = new HashMap<QName, ParticleBinding>();
-   /** Map<QName, ModelGroupBinding> for */
-   private Map<QName, ModelGroupBinding> groups = new HashMap<QName, ModelGroupBinding>();
+   private Map elements = new HashMap();
    /** The default package information */
    private PackageMetaData packageMetaData;
    /** Schema resolver to use for foreign namespaces */
@@ -87,7 +84,7 @@ public class SchemaBinding
    private boolean useNoArgCtorIfFound;
    /** The default property name to use for simple content bindings */
    private String simpleContentProperty = "value";
-   
+
    /** if all the characters in the mixed content are whitespaces
     *  should they be considered indentation and ignored?
     *  the default is true for the backwards compatibility */
@@ -146,28 +143,7 @@ public class SchemaBinding
       addType(new SimpleTypeBinding(Constants.QNAME_UNSIGNEDBYTE));
       addType(new SimpleTypeBinding(Constants.QNAME_POSITIVEINTEGER));
    }
-   
-   public void addPrefixMapping(String prefix, String ns)
-   {
-      if(nsByPrefix == Collections.EMPTY_MAP)
-      {
-         nsByPrefix = Collections.singletonMap(prefix, ns);
-      }
-      else
-      {
-         if(nsByPrefix.size() == 1)
-         {
-            nsByPrefix = new HashMap<String, String>(nsByPrefix);
-         }
-         nsByPrefix.put(prefix, ns);
-      }
-   }
-   
-   public String getNamespace(String prefix)
-   {
-      return nsByPrefix.get(prefix);
-   }
-   
+
    /**
     * Get the namespaces.
     * 
@@ -193,7 +169,7 @@ public class SchemaBinding
 
    public TypeBinding getType(QName qName)
    {
-      return types.get(qName);
+      return (TypeBinding)types.get(qName);
    }
 
    public void addType(TypeBinding type)
@@ -208,14 +184,14 @@ public class SchemaBinding
 
    public ElementBinding getElement(QName name)
    {
-      ParticleBinding particle = elements.get(name);
+      ParticleBinding particle = (ParticleBinding)elements.get(name);
       ElementBinding element = (ElementBinding)(particle == null ? null : particle.getTerm());
       return element;
    }
 
    public ParticleBinding getElementParticle(QName name)
    {
-      return elements.get(name);
+      return (ParticleBinding)elements.get(name);
    }
 
    public void addElement(ElementBinding element)
@@ -235,7 +211,7 @@ public class SchemaBinding
    {
       return new Iterator()
       {
-         private Iterator<ParticleBinding> particleIterator = elements.values().iterator();
+         private Iterator particleIterator = elements.values().iterator();
 
          public boolean hasNext()
          {
@@ -244,7 +220,7 @@ public class SchemaBinding
 
          public Object next()
          {
-            ParticleBinding particle = particleIterator.next();
+            ParticleBinding particle = (ParticleBinding)particleIterator.next();
             return particle.getTerm();
          }
 
@@ -255,29 +231,14 @@ public class SchemaBinding
       };
    }
 
-   public Iterator<ParticleBinding> getElementParticles()
+   public Iterator getElementParticles()
    {
       return elements.values().iterator();
    }
 
-   public Iterator<TypeBinding> getTypes()
+   public Iterator getTypes()
    {
       return Collections.unmodifiableCollection(types.values()).iterator();
-   }
-
-   public ModelGroupBinding getGroup(QName name)
-   {
-      return groups.get(name);
-   }
-
-   public void addGroup(QName name, ModelGroupBinding group)
-   {
-      groups.put(name, group);
-   }
-
-   public Iterator<ModelGroupBinding> getGroups()
-   {
-      return groups.values().iterator();
    }
 
    public PackageMetaData getPackageMetaData()
@@ -472,7 +433,7 @@ public class SchemaBinding
       && wildcard.getUnresolvedElementHandler() instanceof DomParticleHandler
       && wildcard.getUnresolvedMarshaller() instanceof DomLocalMarshaller;
    }
-   
+
    public boolean isIgnoreWhitespacesInMixedContent()
    {
       return ignoreWhitespacesInMixedContent;
@@ -482,7 +443,7 @@ public class SchemaBinding
    {
       this.ignoreWhitespacesInMixedContent = value;
    }
-   
+
    void addElementParticle(ParticleBinding particle)
    {
       ElementBinding element = (ElementBinding)particle.getTerm();

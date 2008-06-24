@@ -21,6 +21,11 @@
   */
 package org.jboss.xb.binding;
 
+import org.jboss.logging.Logger;
+import org.jboss.util.Base64;
+
+import javax.xml.namespace.QName;
+import javax.xml.namespace.NamespaceContext;
 import java.io.ByteArrayOutputStream;
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
@@ -31,17 +36,11 @@ import java.math.BigInteger;
 import java.net.URISyntaxException;
 import java.text.DecimalFormat;
 import java.text.ParseException;
-import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.List;
 import java.util.StringTokenizer;
 import java.util.TimeZone;
-
-import javax.xml.namespace.NamespaceContext;
-import javax.xml.namespace.QName;
-
-import org.jboss.logging.Logger;
-import org.jboss.util.Base64;
+import java.util.List;
+import java.util.ArrayList;
 
 
 /**
@@ -273,6 +272,30 @@ public final class SimpleTypeBindings
          return marshalDate(c);
       }
    };
+
+   private static final Method BIG_DECIMAL_TO_STRING;
+
+   static
+   {
+      Class bigDecimalClass = BigDecimal.class;
+      Method bigDecimalToString = null;
+      try 
+      {
+         bigDecimalToString = bigDecimalClass.getMethod("toPlainString", new Class[] {});
+      } 
+      catch (NoSuchMethodException e) 
+      {
+         try 
+         {
+            bigDecimalToString = bigDecimalClass.getMethod("toString", new Class[] {});
+         } 
+         catch (NoSuchMethodException e2)
+         {
+        	 throw new JBossXBRuntimeException("Unable to find java.math.BigDecimal.toString() method",e2);
+         }
+      }
+      BIG_DECIMAL_TO_STRING = bigDecimalToString;
+   }
 	
    // check for uniqueness of hashCode's
    static
@@ -1138,7 +1161,14 @@ public final class SimpleTypeBindings
       else if(typeCode == XS_DECIMAL)
       {
          BigDecimal bd = (BigDecimal)value;
-         result = bd.toPlainString();
+         try 
+         {
+            result = (String) BIG_DECIMAL_TO_STRING.invoke(bd, new Object[] {});
+         }
+         catch (Exception e)
+         {
+            throw new JBossXBRuntimeException("Unable to invoke java.math.BigDecimal." + BIG_DECIMAL_TO_STRING.getName() + "() method.", e);
+         }
       }
       else if(typeCode == XS_DATETIME)
       {
@@ -1411,31 +1441,31 @@ public final class SimpleTypeBindings
       }
 
       QName result = null;
-      if(Integer.class == cls || Integer.TYPE == cls)
+      if(Integer.class == cls)
       {
          result = Constants.QNAME_INT;
       }
-      else if(cls == Long.class || Long.TYPE == cls)
+      else if(cls == Long.class)
       {
          result = Constants.QNAME_LONG;
       }
-      else if(cls == Short.class || Short.TYPE == cls)
+      else if(cls == Short.class)
       {
          result = Constants.QNAME_SHORT;
       }
-      else if(cls == Byte.class || Byte.TYPE == cls)
+      else if(cls == Byte.class)
       {
          result = Constants.QNAME_BYTE;
       }
-      else if(cls == Float.class || Float.TYPE == cls)
+      else if(cls == Float.class)
       {
          result = Constants.QNAME_FLOAT;
       }
-      else if(cls == Double.class || Double.TYPE == cls)
+      else if(cls == Double.class)
       {
          result = Constants.QNAME_DOUBLE;
       }
-      else if(cls == Boolean.class || Boolean.TYPE == cls)
+      else if(cls == Boolean.class)
       {
          result = Constants.QNAME_BOOLEAN;
       }
@@ -1993,7 +2023,7 @@ public final class SimpleTypeBindings
          String nsURI = value.substring(1, i);
          return new QName(nsURI, value.substring(i + 1));
       }
-      
+
       int colonIndex = value.lastIndexOf(":");
       if(colonIndex > 0)
       {

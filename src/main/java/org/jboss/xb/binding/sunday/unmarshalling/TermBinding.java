@@ -59,7 +59,6 @@ public abstract class TermBinding
    {
    }
    
-   
    public ClassMetaData getClassMetaData()
    {
       return classMetaData;

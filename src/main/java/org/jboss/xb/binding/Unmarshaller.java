@@ -24,13 +24,12 @@ package org.jboss.xb.binding;
 import java.io.InputStream;
 import java.io.Reader;
 
-import org.jboss.xb.binding.metadata.unmarshalling.DocumentBinding;
 import org.jboss.xb.binding.parser.JBossXBParser;
 import org.jboss.xb.binding.sunday.unmarshalling.SchemaBinding;
 import org.jboss.xb.binding.sunday.unmarshalling.SchemaBindingResolver;
+import org.jboss.xb.binding.metadata.unmarshalling.DocumentBinding;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.ErrorHandler;
-import org.xml.sax.InputSource;
 
 /**
  * @author <a href="mailto:alex@jboss.org">Alexey Loubyansky</a>
@@ -70,21 +69,15 @@ public interface Unmarshaller
 
    Object unmarshal(InputStream xmlStream, SchemaBinding schemaBinding) throws JBossXBException;
 
-   Object unmarshal(InputSource source, SchemaBinding schemaBinding) throws JBossXBException;
-
    Object unmarshal(String xml, SchemaBindingResolver schemaResolver) throws JBossXBException;
 
    Object unmarshal(Reader xmlReader, SchemaBindingResolver schemaResolver) throws JBossXBException;
 
    Object unmarshal(InputStream xmlStream, SchemaBindingResolver schemaResolver) throws JBossXBException;
 
-   Object unmarshal(InputSource source, SchemaBindingResolver schemaResolver) throws JBossXBException;
-
    Object unmarshal(Reader reader, ObjectModelFactory factory, Object root) throws JBossXBException;
 
    Object unmarshal(InputStream is, ObjectModelFactory factory, Object root) throws JBossXBException;
-
-   Object unmarshal(InputSource source, ObjectModelFactory factory, Object root) throws JBossXBException;
 
    Object unmarshal(String systemId, ObjectModelFactory factory, Object root) throws JBossXBException;
 

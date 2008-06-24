@@ -44,12 +44,10 @@ public class WildcardBinding
    private QName qName;
    private SchemaBindingResolver schemaResolver;
    private short pc;
-
    private ParticleHandler unresolvedElementHandler;
    private CharactersHandler unresolvedCharactersHandler;
    private ObjectLocalMarshaller unresolvedMarshaller;
    private ParticleHandler wildcardHandler;
-
 
    public WildcardBinding(SchemaBinding schema)
    {
@@ -144,7 +142,7 @@ public class WildcardBinding
    {
       this.unresolvedMarshaller = marshaller;
    }
-   
+
    public ElementBinding getElement(QName qName, Attributes attrs)
    {
       if(pc == PC_SKIP)
@@ -231,23 +229,14 @@ public class WildcardBinding
       }
 
       // todo this stuff could be cached
-      // the 'this' wildcard could be reused
-      // the reason it is overriden is to eliminate its wildcardHandler
-      // which is not initialized in the new one
-      WildcardBinding unresolvedWildcard = new WildcardBinding(schema);
-      unresolvedWildcard.pc = PC_LAX;
-      unresolvedWildcard.schemaResolver = schemaResolver;
-      unresolvedWildcard.unresolvedCharactersHandler = unresolvedCharactersHandler;
-      unresolvedWildcard.unresolvedElementHandler = unresolvedElementHandler;
-      
-      ParticleBinding particle = new ParticleBinding(unresolvedWildcard);
+      ParticleBinding particle = new ParticleBinding(this);
       SequenceBinding sequence = new SequenceBinding(schema);
       sequence.addParticle(particle);
 
       TypeBinding type = new TypeBinding();
       type.setHandler(unresolvedElementHandler);
       type.setSimpleType(unresolvedCharactersHandler);
-      type.setParticle(new ParticleBinding(sequence, 1, 0, true));
+      type.setParticle(new ParticleBinding(sequence));
 
       return new ElementBinding(schema, qName, type);
    }

@@ -24,15 +24,14 @@ package org.jboss.xb.binding;
 import java.io.InputStream;
 import java.io.Reader;
 
-import org.jboss.xb.binding.metadata.unmarshalling.DocumentBinding;
 import org.jboss.xb.binding.parser.JBossXBParser;
 import org.jboss.xb.binding.parser.sax.SaxJBossXBParser;
 import org.jboss.xb.binding.sunday.unmarshalling.SchemaBinding;
 import org.jboss.xb.binding.sunday.unmarshalling.SchemaBindingResolver;
 import org.jboss.xb.binding.sunday.unmarshalling.SundayContentHandler;
+import org.jboss.xb.binding.metadata.unmarshalling.DocumentBinding;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.ErrorHandler;
-import org.xml.sax.InputSource;
 
 /**
  * Unmarshaller implementation.
@@ -59,12 +58,6 @@ public class UnmarshallerImpl implements Unmarshaller
    public void setValidation(boolean validation) throws JBossXBException
    {
       parser.setFeature(VALIDATION, validation);
-      /* Only set DYNAMIC_VALIDATION to false. Setting this to true
-         if its not already requires a document to have a DOCTYPE declaring
-         the root element
-      */
-      if( validation == false )
-         parser.setFeature(DYNAMIC_VALIDATION, false);
    }
 
    public void setSchemaValidation(boolean validation) throws JBossXBException
@@ -134,13 +127,6 @@ public class UnmarshallerImpl implements Unmarshaller
       return cHandler.getRoot();
    }
 
-   public Object unmarshal(InputSource source, SchemaBinding schemaBinding) throws JBossXBException
-   {
-      JBossXBParser.ContentHandler cHandler = new SundayContentHandler(schemaBinding);
-      parser.parse(source, cHandler);
-      return cHandler.getRoot();
-   }
-
    public Object unmarshal(String xml, SchemaBindingResolver schemaResolver) throws JBossXBException
    {
       JBossXBParser.ContentHandler cHandler = new SundayContentHandler(schemaResolver);
@@ -159,13 +145,6 @@ public class UnmarshallerImpl implements Unmarshaller
    {
       JBossXBParser.ContentHandler cHandler = new SundayContentHandler(schemaResolver);
       parser.parse(xmlStream, cHandler);
-      return cHandler.getRoot();
-   }
-
-   public Object unmarshal(InputSource source, SchemaBindingResolver schemaResolver) throws JBossXBException
-   {
-      JBossXBParser.ContentHandler cHandler = new SundayContentHandler(schemaResolver);
-      parser.parse(source, cHandler);
       return cHandler.getRoot();
    }
 
@@ -199,17 +178,6 @@ public class UnmarshallerImpl implements Unmarshaller
       }
       builder.init(factory, root);
       parser.parse(systemId, builder);
-      return builder.getRoot();
-   }
-
-   public Object unmarshal(InputSource is, ObjectModelFactory factory, Object root) throws JBossXBException
-   {
-      if(builder == null)
-      {
-         builder = new ObjectModelBuilder();
-      }
-      builder.init(factory, root);
-      parser.parse(is, builder);
       return builder.getRoot();
    }
 
